@@ -3,9 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="Інтерактивний AR-додаток із вікториною про Україну">
+  <meta name="keywords" content="AR, доповнена реальність, вікторина, Україна">
   <title>AR Камера — Чарівне Пригодництво!</title>
   <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
-  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+  <script src="https://unpkg.com/aframe-ar@0.9.6/dist/aframe-ar.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue&display=swap" rel="stylesheet">
   <style>
     html, body {
       margin: 0;
@@ -14,23 +17,41 @@
       height: 100%;
       overflow: hidden;
       touch-action: none;
-      font-family: 'Comic Sans MS', cursive, sans-serif;
+      font-family: 'Comic Neue', 'Comic Sans MS', sans-serif;
       background: transparent;
     }
     a-scene {
-      width: 100% !important;
-      height: 100% !important;
+      width: 100%;
+      height: 100%;
       position: fixed;
       top: 0;
       left: 0;
       background: transparent;
     }
 
+    /* Екран завантаження */
+    #loadingScreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      font-size: 1.8em;
+    }
+
     /* Екран активації */
     #clickToStart {
       position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       background: rgba(0, 0, 0, 0.8);
       color: white;
       display: flex;
@@ -44,7 +65,7 @@
     }
     #clickToStart span {
       display: inline-block;
-      animation: bounce 1s infinite;
+      animation: bounce 1s 3;
     }
     @keyframes bounce {
       0%, 100% { transform: translateY(0); }
@@ -176,10 +197,12 @@
   </style>
 </head>
 <body>
+  <!-- Екран завантаження -->
+  <div id="loadingScreen">Завантаження...</div>
 
   <!-- Екран активації -->
   <div id="clickToStart">
-    Клацни, щоб<br>увімкнути чари! ✨<br>
+    <span id="clickToStartText">Клацни, щоб увімкнути чари! ✨</span><br>
     <span>👇</span>
   </div>
 
@@ -190,8 +213,8 @@
   <div id="centerYellowDot"></div>
 
   <!-- Кнопки -->
-  <button id="playVideoBtn" class="btn">▶️ Запустити відео</button>
-  <button id="startQuizBtn" class="btn">🎮 Грати у вікторину</button>
+  <button id="playVideoBtn" class="btn" aria-label="Запустити AR-відео">▶️ Запустити відео</button>
+  <button id="startQuizBtn" class="btn" aria-label="Розпочати вікторину">🎮 Грати у вікторину</button>
 
   <!-- AR Сцена -->
   <a-scene embedded arjs="sourceType: webcam; detectionMode: mono; trackingMethod: best;">
@@ -202,7 +225,6 @@
         position="0 0 0" 
         rotation="-90 0 0" 
         preload="none"
-        muted="true"
         playsinline>
       </a-video>
     </a-marker>
@@ -211,15 +233,16 @@
 
   <!-- Посилання -->
   <a href="https://youtube.com/playlist?list=PL6UDFwT9TzFxsVdFiEBsQ9yFpcYRPOpfO&si=IyXv1SkdPyvhcW7Z" 
-     id="smartLessaBtn" target="_blank">👉 Дивись більше на @SmartLessa</a>
+     id="smartLessaBtn" target="_blank" aria-label="Перейти до YouTube SmartLessa">👉 Дивись більше на @SmartLessa</a>
 
   <!-- Вікторина -->
-  <div id="quizContainer">
+  <div id="quizContainer" role="dialog" aria-labelledby="quizQuestion">
     <div id="quizQuestion">Питання</div>
-    <button class="quizOption" id="opt1">Варіант 1</button>
-    <button class="quizOption" id="opt2">Варіант 2</button>
-    <button class="quizOption" id="opt3">Варіант 3</button>
-    <button class="btn" onclick="restartAR()">🔄 Повернутися до сканування</button>
+    <button class="quizOption" id="opt1" aria-label="Варіант 1">Варіант 1</button>
+    <button class="quizOption" id="opt2" aria-label="Варіант 2">Варіант 2</button>
+    <button class="quizOption" id="opt3" aria-label="Варіант 3">Варіант 3</button>
+    <button class="btn" onclick="restartAR()" aria-label="Повернутися до сканування">🔄 Повернутися до сканування</button>
+    <button class="btn" onclick="restartQuiz()" aria-label="Спробувати вікторину ще раз">🔄 Спробувати ще раз</button>
   </div>
 
   <script>
@@ -232,16 +255,47 @@
       const arVideo = document.getElementById('arVideo');
       const clickToStart = document.getElementById('clickToStart');
       const quizContainer = document.getElementById('quizContainer');
+      const loadingScreen = document.getElementById('loadingScreen');
+      const clickToStartText = document.getElementById('clickToStartText');
 
-      let canPlay = false;   // Чи розблоковано взаємодію
-      let isPlaying = false; // Чи відео зараз грає
-      let isQuizActive = false; // Чи відкрита вікторина
+      const state = {
+        canPlay: false,
+        isPlaying: false,
+        isQuizActive: false
+      };
 
-      // --- Вікторина ---
+      // Локалізація
+      const translations = {
+        uk: {
+          clickToStart: "Клацни, щоб увімкнути чари! ✨",
+          scanText: "🔍 Наведи на зображення!",
+          playVideo: "▶️ Запустити відео",
+          startQuiz: "🎮 Грати у вікторину",
+          restartAR: "🔄 Повернутися до сканування",
+          restartQuiz: "🔄 Спробувати ще раз"
+        },
+        en: {
+          clickToStart: "Click to start the magic! ✨",
+          scanText: "🔍 Point at the image!",
+          playVideo: "▶️ Play video",
+          startQuiz: "🎮 Play quiz",
+          restartAR: "🔄 Back to scanning",
+          restartQuiz: "🔄 Try again"
+        }
+      };
+      const lang = navigator.language.startsWith('uk') ? 'uk' : 'en';
+      clickToStartText.textContent = translations[lang].clickToStart;
+      scanText.textContent = translations[lang].scanText;
+      playVideoBtn.textContent = translations[lang].playVideo;
+      startQuizBtn.textContent = translations[lang].startQuiz;
+      document.querySelector('button[onclick="restartAR()"]').textContent = translations[lang].restartAR;
+      document.querySelector('button[onclick="restartQuiz()"]').textContent = translations[lang].restartQuiz;
+
+      // Вікторина
       const quiz = [
-        { q: "Яка столиця України?", o: ["Київ", "Львів", "Одеса"], c: 0 },
-        { q: "Який колір прапора України?", o: ["Червоно-чорний", "Синьо-жовтий", "Зелено-білий"], c: 1 },
-        { q: "Яка найвища гора в Україні?", o: ["Говерла", "Роман-Кош", "Піп Іван"], c: 0 }
+        { q: lang === 'uk' ? "Яка столиця України?" : "What is the capital of Ukraine?", o: ["Київ", "Львів", "Одеса"], c: 0 },
+        { q: lang === 'uk' ? "Який колір прапора України?" : "What is the color of Ukraine's flag?", o: ["Червоно-чорний", "Синьо-жовтий", "Зелено-білий"], c: 1 },
+        { q: lang === 'uk' ? "Яка найвища гора в Україні?" : "What is the highest mountain in Ukraine?", o: ["Говерла", "Роман-Кош", "Піп Іван"], c: 0 }
       ];
       let quizIndex = 0;
       let quizScore = 0;
@@ -250,8 +304,8 @@
         console.log("🎮 Вікторина відкрита");
         arVideo.pause();
         arVideo.currentTime = 0;
-        isPlaying = false;
-        isQuizActive = true;
+        state.isPlaying = false;
+        state.isQuizActive = true;
 
         quizContainer.style.display = 'flex';
         playVideoBtn.style.display = 'none';
@@ -287,22 +341,49 @@
       function showQuizResult() {
         const stars = '⭐'.repeat(quizScore);
         document.getElementById('quizQuestion').innerHTML = 
-          `🎉 Вітаю!<br>Ти молодець!<br>Результат: ${quizScore}/3 ${stars}`;
+          lang === 'uk' 
+            ? `🎉 Вітаю!<br>Ти молодець!<br>Результат: ${quizScore}/3 ${stars}`
+            : `🎉 Congratulations!<br>Well done!<br>Result: ${quizScore}/3 ${stars}`;
         document.getElementById('opt1').style.display = 'none';
         document.getElementById('opt2').style.display = 'none';
         document.getElementById('opt3').style.display = 'none';
       }
 
-      // --- Екран активації ---
+      function restartQuiz() {
+        quizIndex = 0;
+        quizScore = 0;
+        document.getElementById('opt1').style.display = 'block';
+        document.getElementById('opt2').style.display = 'block';
+        document.getElementById('opt3').style.display = 'block';
+        nextQuizQuestion();
+      }
+
+      // Екран активації
       clickToStart.addEventListener('click', () => {
         clickToStart.style.display = 'none';
-        canPlay = true;
+        state.canPlay = true;
       });
 
-      // --- Відео: метадані завантажено ---
+      // Перевірка доступу до камери
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert(lang === 'uk' ? "Ваш пристрій не підтримує доступ до камери." : "Your device does not support camera access.");
+        loadingScreen.style.display = 'none';
+      } else {
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+          .then(stream => {
+            console.log("✅ Камера доступна");
+            loadingScreen.style.display = 'none';
+          })
+          .catch(err => {
+            console.error("❌ Помилка доступу до камери:", err);
+            alert(lang === 'uk' ? "Не вдалося отримати доступ до камери. Перевірте дозволи." : "Failed to access the camera. Check permissions.");
+            loadingScreen.style.display = 'none';
+          });
+      }
+
+      // Відео: метадані завантажено
       arVideo.addEventListener('loadedmetadata', () => {
         arVideo.pause();
-
         const videoWidth = arVideo.videoWidth;
         const videoHeight = arVideo.videoHeight;
         const scaleFactor = 2;
@@ -310,78 +391,81 @@
         const width = (videoWidth / videoHeight) * height;
         arVideo.setAttribute('width', width);
         arVideo.setAttribute('height', height);
+        loadingScreen.style.display = 'none';
       });
 
-      // --- Маркер знайдено ---
+      // Маркер знайдено
       marker.addEventListener('markerFound', () => {
         scanText.style.display = 'none';
         centerYellowDot.style.display = 'block';
 
-        if (!isPlaying && canPlay && !isQuizActive) {
+        if (!state.isPlaying && state.canPlay && !state.isQuizActive) {
           playVideoBtn.style.display = 'block';
         }
       });
 
-      // --- Маркер втрачено ---
+      // Маркер втрачено
       marker.addEventListener('markerLost', () => {
         scanText.style.display = 'block';
         centerYellowDot.style.display = 'none';
         playVideoBtn.style.display = 'none';
         startQuizBtn.style.display = 'none';
 
-        if (isPlaying || !arVideo.ended) {
+        if (state.isPlaying || !arVideo.ended) {
           arVideo.pause();
           arVideo.currentTime = 0;
-          isPlaying = false;
+          state.isPlaying = false;
         }
       });
 
-      // --- Відео закінчилося ---
+      // Відео закінчилося
       arVideo.addEventListener('ended', () => {
-        isPlaying = false;
+        state.isPlaying = false;
         playVideoBtn.style.display = 'none';
         startQuizBtn.style.display = 'block';
       });
 
-      // --- Запуск відео ---
+      // Запуск відео
       function playVideo() {
-        if (isPlaying) return;
+        if (state.isPlaying) return;
 
         arVideo.currentTime = 0;
         const playPromise = arVideo.play();
 
         if (playPromise !== undefined) {
           playPromise.then(() => {
-            isPlaying = true;
+            state.isPlaying = true;
             playVideoBtn.style.display = 'none';
 
-            // 🔒 Страховка: через 19 секунд — вікторина
-            setTimeout(() => {
-              if (isPlaying && !arVideo.ended) {
-                arVideo.pause();
-                arVideo.currentTime = 0;
-                isPlaying = false;
-                startQuizBtn.style.display = 'block';
-              }
-            }, 19000);
-
+            // Зупинка після завершення відео
+            arVideo.addEventListener('loadedmetadata', () => {
+              const duration = arVideo.duration * 1000;
+              setTimeout(() => {
+                if (state.isPlaying && !arVideo.ended) {
+                  arVideo.pause();
+                  arVideo.currentTime = 0;
+                  state.isPlaying = false;
+                  startQuizBtn.style.display = 'block';
+                }
+              }, duration);
+            });
           }).catch(err => {
             console.error("❌ Не вдалося запустити відео:", err);
-            alert("Не вдалося запустити відео. Натисни ще раз.");
+            alert(lang === 'uk' ? "Не вдалося запустити відео. Натисни ще раз." : "Failed to play video. Try again.");
           });
         }
       }
 
-      // --- Прив’язуємо кнопки ---
+      // Прив’язуємо кнопки
       playVideoBtn.addEventListener('click', playVideo);
       startQuizBtn.addEventListener('click', showQuiz);
 
-      // --- Повернення ---
+      // Повернення
       window.restartAR = function() {
         arVideo.pause();
         arVideo.currentTime = 0;
-        isPlaying = false;
-        isQuizActive = false;
+        state.isPlaying = false;
+        state.isQuizActive = false;
 
         quizContainer.style.display = 'none';
         document.getElementById('opt1').style.display = 'block';
@@ -391,25 +475,21 @@
         scanText.style.display = 'block';
       };
 
-      // --- Фікс висоти ---
+      // Фікс висоти
       function fixHeight() {
         document.body.style.height = window.innerHeight + 'px';
       }
       window.addEventListener('resize', fixHeight);
       fixHeight();
 
-      // --- Задня камера ---
-      AFRAME.utils.device.getCameraPermission = () => {
-        return navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment' }
-        });
-      };
-
-      // --- Логування ---
+      // Логування
       arVideo.addEventListener('play', () => console.log("▶️ play"));
       arVideo.addEventListener('pause', () => console.log("⏸️ pause"));
       arVideo.addEventListener('error', e => console.error("❌ video error:", e));
-      arVideo.addEventListener('canplay', () => console.log("✅ canplay"));
+      arVideo.addEventListener('canplay', () => {
+        console.log("✅ canplay");
+        loadingScreen.style.display = 'none';
+      });
     });
   </script>
 </body>
