@@ -6,8 +6,10 @@
   <meta name="description" content="Інтерактивний AR-додаток із вікториною про Україну">
   <meta name="keywords" content="AR, доповнена реальність, вікторина, Україна">
   <title>AR Камера — Чарівне Пригодництво!</title>
+  <!-- ✅ Виправлено: пробіли в URL -->
   <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
-  <script src="https://unpkg.com/aframe-ar@0.9.6/dist/aframe-ar.min.js"></script>
+  <!-- ✅ Виправлено: сумісна версія AR.js -->
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Comic+Neue&display=swap" rel="stylesheet">
   <style>
     html, body {
@@ -65,7 +67,7 @@
     }
     #clickToStart span {
       display: inline-block;
-      animation: bounce 1s 3;
+      animation: bounce 1s infinite 0.5s;
     }
     @keyframes bounce {
       0%, 100% { transform: translateY(0); }
@@ -197,6 +199,7 @@
   </style>
 </head>
 <body>
+
   <!-- Екран завантаження -->
   <div id="loadingScreen">Завантаження...</div>
 
@@ -225,8 +228,8 @@
         position="0 0 0" 
         rotation="-90 0 0" 
         preload="none"
-        playsinline
-        loop="false">
+        muted="true"
+        playsinline>
       </a-video>
     </a-marker>
     <a-entity camera></a-entity>
@@ -350,14 +353,15 @@
         document.getElementById('opt3').style.display = 'none';
       }
 
-      function restartQuiz() {
+      // Повторна спроба вікторини
+      window.restartQuiz = function() {
         quizIndex = 0;
         quizScore = 0;
         document.getElementById('opt1').style.display = 'block';
         document.getElementById('opt2').style.display = 'block';
         document.getElementById('opt3').style.display = 'block';
         nextQuizQuestion();
-      }
+      };
 
       // Екран активації
       clickToStart.addEventListener('click', () => {
@@ -392,12 +396,16 @@
         const width = (videoWidth / videoHeight) * height;
         arVideo.setAttribute('width', width);
         arVideo.setAttribute('height', height);
+      });
+
+      // Подія: відео готове
+      arVideo.addEventListener('canplay', () => {
+        console.log("✅ Відео готове до відтворення");
         loadingScreen.style.display = 'none';
       });
 
       // Маркер знайдено
       marker.addEventListener('markerFound', () => {
-        console.log("✅ Маркер знайдено");
         scanText.style.display = 'none';
         centerYellowDot.style.display = 'block';
 
@@ -408,7 +416,6 @@
 
       // Маркер втрачено
       marker.addEventListener('markerLost', () => {
-        console.log("❌ Маркер втрачено");
         scanText.style.display = 'block';
         centerYellowDot.style.display = 'none';
         playVideoBtn.style.display = 'none';
@@ -423,28 +430,34 @@
 
       // Відео закінчилося
       arVideo.addEventListener('ended', () => {
-        console.log("🏁 Відео завершено");
         state.isPlaying = false;
         playVideoBtn.style.display = 'none';
-        if (state.canPlay && !state.isQuizActive && marker.visible) {
-          startQuizBtn.style.display = 'block';
-        }
+        startQuizBtn.style.display = 'block';
       });
 
       // Запуск відео
       function playVideo() {
         if (state.isPlaying) return;
 
-        console.log("▶️ Спроба запуску відео");
         arVideo.currentTime = 0;
-        arVideo.removeAttribute('loop'); // Гарантуємо, що відео не циклічне
         const playPromise = arVideo.play();
 
         if (playPromise !== undefined) {
           playPromise.then(() => {
+            console.log("▶️ Відео запущено");
             state.isPlaying = true;
             playVideoBtn.style.display = 'none';
-            console.log("✅ Відео відтворюється");
+
+            // Страховка: через 20 секунд — вікторина
+            setTimeout(() => {
+              if (state.isPlaying && !arVideo.ended) {
+                arVideo.pause();
+                arVideo.currentTime = 0;
+                state.isPlaying = false;
+                startQuizBtn.style.display = 'block';
+              }
+            }, 20000);
+
           }).catch(err => {
             console.error("❌ Не вдалося запустити відео:", err);
             alert(lang === 'uk' ? "Не вдалося запустити відео. Натисни ще раз." : "Failed to play video. Try again.");
@@ -456,9 +469,8 @@
       playVideoBtn.addEventListener('click', playVideo);
       startQuizBtn.addEventListener('click', showQuiz);
 
-      // Повернення
+      // Повернення до AR
       window.restartAR = function() {
-        console.log("🔄 Повернення до AR");
         arVideo.pause();
         arVideo.currentTime = 0;
         state.isPlaying = false;
@@ -480,13 +492,9 @@
       fixHeight();
 
       // Логування
-      arVideo.addEventListener('play', () => console.log("▶️ Відео відтворюється"));
-      arVideo.addEventListener('pause', () => console.log("⏸️ Відео на паузі"));
-      arVideo.addEventListener('error', e => console.error("❌ Помилка відео:", e));
-      arVideo.addEventListener('canplay', () => {
-        console.log("✅ Відео готове до відтворення");
-        loadingScreen.style.display = 'none';
-      });
+      arVideo.addEventListener('play', () => console.log("▶️ play"));
+      arVideo.addEventListener('pause', () => console.log("⏸️ pause"));
+      arVideo.addEventListener('error', e => console.error("❌ video error:", e));
     });
   </script>
 </body>
