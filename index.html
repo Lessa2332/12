@@ -26,6 +26,26 @@
       background: transparent;
     }
 
+    #clickToStart {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      text-align: center;
+      font-size: 1.8em;
+      padding: 20px;
+    }
+    #clickToStart span {
+      display: inline-block;
+      animation: bounce 1s infinite;
+    }
+
     #scanText {
       position: fixed;
       top: 50%;
@@ -38,43 +58,10 @@
       z-index: 10;
       text-align: center;
       width: 90%;
-      animation: pulse 1.5s infinite;
       background: rgba(255, 255, 0, 0.9);
       padding: 15px;
       border-radius: 20px;
       box-shadow: 0 0 20px rgba(255, 105, 180, 0.8);
-    }
-    @keyframes pulse {
-      0% { transform: translate(-50%, -50%) scale(1); }
-      50% { transform: translate(-50%, -50%) scale(1.1); }
-      100% { transform: translate(-50%, -50%) scale(1); }
-    }
-
-    #clickToStart {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      color: white;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 100;
-      font-size: 1.8em;
-      text-align: center;
-      padding: 20px;
-    }
-    #clickToStart span {
-      display: inline-block;
-      animation: bounce 1s infinite;
-    }
-
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
     }
 
     #centerYellowDot {
@@ -92,6 +79,29 @@
       opacity: 0.9;
     }
 
+    #playVideoBtn {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #4CAF50;
+      color: white;
+      padding: 16px 32px;
+      border-radius: 30px;
+      font-size: 1.3em;
+      font-weight: bold;
+      border: none;
+      z-index: 10;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+      display: none;
+      cursor: pointer;
+      animation: popUp 0.5s forwards;
+    }
+    @keyframes popUp {
+      from { opacity: 0; transform: translateX(-50%) scale(0.8); }
+      to { opacity: 1; transform: translateX(-50%) scale(1); }
+    }
+
     #smartLessaBtn {
       position: fixed;
       bottom: 20px;
@@ -107,21 +117,34 @@
       z-index: 10;
       box-shadow: 0 6px 12px rgba(0,0,0,0.4);
     }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    @keyframes pulse {
+      0% { transform: translate(-50%, -50%) scale(1); }
+      50% { transform: translate(-50%, -50%) scale(1.1); }
+      100% { transform: translate(-50%, -50%) scale(1); }
+    }
   </style>
 </head>
 <body>
 
-  <!-- Підказка: клікни, щоб увімкнути -->
+  <!-- Екран активації -->
   <div id="clickToStart">
     Клацни, щоб<br>увімкнути чари! ✨<br>
     <span>👇</span>
   </div>
 
-  <!-- Інструкція AR -->
+  <!-- Інструкція -->
   <div id="scanText">🔍 Наведи на зображення!</div>
 
   <!-- Жовта крапка -->
   <div id="centerYellowDot"></div>
+
+  <!-- Кнопка запуску -->
+  <button id="playVideoBtn" onclick="playVideo()">▶️ Запустити знову</button>
 
   <!-- AR Сцена -->
   <a-scene embedded arjs="sourceType: webcam; detectionMode: mono; trackingMethod: best;">
@@ -139,7 +162,7 @@
     <a-entity camera></a-entity>
   </a-scene>
 
-  <!-- Кнопка YouTube -->
+  <!-- Посилання -->
   <a href="https://youtube.com/playlist?list=PL6UDFwT9TzFxsVdFiEBsQ9yFpcYRPOpfO&si=IyXv1SkdPyvhcW7Z" 
      id="smartLessaBtn" target="_blank">👉 Дивись більше на @SmartLessa</a>
 
@@ -150,19 +173,20 @@
     const marker = document.getElementById('marker');
     const scanText = document.getElementById('scanText');
     const centerYellowDot = document.getElementById('centerYellowDot');
+    const playVideoBtn = document.getElementById('playVideoBtn');
     const arVideo = document.getElementById('arVideo');
     const successSound = document.getElementById('successSound');
     const clickToStart = document.getElementById('clickToStart');
 
-    let canPlay = false; // Чи дозволив користувач грати
+    let canPlay = false; // Розблоковано після кліку
 
-    // Перший клік — розблокує можливість грати
-    clickToStart.addEventListener('click', function() {
-      clickToStart.style.display = 'none'; // Приховуємо екран
+    // --- Клік для активації ---
+    clickToStart.addEventListener('click', () => {
+      clickToStart.style.display = 'none';
       canPlay = true;
     });
 
-    // Пропорції відео
+    // --- Пропорції відео ---
     arVideo.addEventListener('loadedmetadata', () => {
       const videoWidth = arVideo.videoWidth;
       const videoHeight = arVideo.videoHeight;
@@ -173,32 +197,49 @@
       arVideo.setAttribute('height', height);
     });
 
-    // Маркер знайдено
+    // --- Подія: маркер знайдено ---
     marker.addEventListener('markerFound', () => {
       scanText.style.display = 'none';
       centerYellowDot.style.display = 'block';
-
-      if (canPlay) {
-        arVideo.play().catch(() => {});
-        successSound.play().catch(() => {});
-      }
+      playVideoBtn.style.display = 'block'; // Показуємо кнопку
     });
 
-    // Маркер втрачено
+    // --- Подія: маркер втрачено ---
     marker.addEventListener('markerLost', () => {
       scanText.style.display = 'block';
       centerYellowDot.style.display = 'none';
+      playVideoBtn.style.display = 'none';
       arVideo.pause();
     });
 
-    // Фікс висоти
+    // --- Відео закінчилося ---
+    arVideo.addEventListener('ended', () => {
+      playVideoBtn.style.display = 'block'; // Знову показуємо кнопку
+    });
+
+    // --- Функція запуску відео ---
+    function playVideo() {
+      arVideo.currentTime = 0; // Почати з початку
+      arVideo.play()
+        .then(() => {
+          playVideoBtn.style.display = 'none'; // Приховуємо кнопку під час відтворення
+          successSound.currentTime = 0;
+          successSound.play().catch(() => {});
+        })
+        .catch(err => {
+          console.error("Не вдалося відтворити відео:", err);
+          alert("Будь ласка, натисни ще раз!");
+        });
+    }
+
+    // --- Фікс висоти ---
     function fixHeight() {
       document.body.style.height = window.innerHeight + 'px';
     }
     window.addEventListener('resize', fixHeight);
     fixHeight();
 
-    // Задня камера
+    // --- Задня камера ---
     AFRAME.utils.device.getCameraPermission = function () {
       return navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment' }
