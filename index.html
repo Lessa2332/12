@@ -205,7 +205,7 @@
         preload="none"
         muted="true"
         loop="false"
-        playsinline> <!-- 🔹 Обов’язковий атрибут для мобільних -->
+        playsinline>
       </a-video>
     </a-marker>
     <a-entity camera></a-entity>
@@ -255,9 +255,14 @@
 
     function showQuiz() {
       console.log("🎮 Вікторина відкрита");
+      arVideo.pause();           // 🔒 Зупиняємо відео
+      arVideo.currentTime = 0;   // 🔁 Повертаємо на початок
+      isPlaying = false;
+
       quizContainer.style.display = 'flex';
       playVideoBtn.style.display = 'none';
       startQuizBtn.style.display = 'none';
+      
       quizIndex = 0;
       quizScore = 0;
       nextQuizQuestion();
@@ -327,17 +332,20 @@
       centerYellowDot.style.display = 'none';
       playVideoBtn.style.display = 'none';
       startQuizBtn.style.display = 'none';
-      if (!arVideo.ended) arVideo.pause();
+      arVideo.pause();           // ✅ Вже було — залишаємо
+      arVideo.currentTime = 0;
+      isPlaying = false;
     });
 
-    // --- 🔔 Головна зміна: страховка + логування ---
+    // --- Подія: відео закінчилося ---
     arVideo.addEventListener('ended', () => {
-      console.log("✅ Відео закінчилося — вікторина активована");
+      console.log("✅ Відео закінчилося");
       isPlaying = false;
       playVideoBtn.style.display = 'none';
       startQuizBtn.style.display = 'block';
     });
 
+    // --- Запуск відео ---
     function playVideo() {
       if (isPlaying) return;
 
@@ -350,6 +358,7 @@
         setTimeout(() => {
           if (isPlaying) {
             console.log("⏰ Страховка: вікторина через 19 сек");
+            arVideo.pause();
             isPlaying = false;
             playVideoBtn.style.display = 'none';
             startQuizBtn.style.display = 'block';
@@ -362,7 +371,12 @@
       });
     }
 
+    // --- Повернення до AR ---
     function restartAR() {
+      arVideo.pause();
+      arVideo.currentTime = 0;
+      isPlaying = false;
+
       quizContainer.style.display = 'none';
       document.getElementById('opt1').style.display = 'block';
       document.getElementById('opt2').style.display = 'block';
@@ -371,19 +385,21 @@
       scanText.style.display = 'block';
     }
 
+    // --- Фікс висоти ---
     function fixHeight() {
       document.body.style.height = window.innerHeight + 'px';
     }
     window.addEventListener('resize', fixHeight);
     fixHeight();
 
+    // --- Задня камера ---
     AFRAME.utils.device.getCameraPermission = () => {
       return navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment' }
       });
     };
 
-    // 🔔 Логування для діагностики
+    // --- Логування для діагностики ---
     arVideo.addEventListener('play', () => console.log("▶️ play"));
     arVideo.addEventListener('pause', () => console.log("⏸️ pause"));
     arVideo.addEventListener('error', e => console.error("❌ error:", e));
