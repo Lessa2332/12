@@ -95,11 +95,6 @@
       box-shadow: 0 6px 12px rgba(0,0,0,0.4);
       display: none;
       cursor: pointer;
-      animation: popUp 0.5s forwards;
-    }
-    @keyframes popUp {
-      from { opacity: 0; transform: translateX(-50%) scale(0.8); }
-      to { opacity: 1; transform: translateX(-50%) scale(1); }
     }
 
     #smartLessaBtn {
@@ -144,7 +139,7 @@
   <div id="centerYellowDot"></div>
 
   <!-- Кнопка запуску -->
-  <button id="playVideoBtn" onclick="playVideo()">▶️ Запустити знову</button>
+  <button id="playVideoBtn" onclick="playVideo()">▶️ Запустити відео</button>
 
   <!-- AR Сцена -->
   <a-scene embedded arjs="sourceType: webcam; detectionMode: mono; trackingMethod: best;">
@@ -178,7 +173,8 @@
     const successSound = document.getElementById('successSound');
     const clickToStart = document.getElementById('clickToStart');
 
-    let canPlay = false; // Розблоковано після кліку
+    let canPlay = false; // Чи розблоковано гру
+    let isPlaying = false; // Чи відео відтворюється
 
     // --- Клік для активації ---
     clickToStart.addEventListener('click', () => {
@@ -201,7 +197,11 @@
     marker.addEventListener('markerFound', () => {
       scanText.style.display = 'none';
       centerYellowDot.style.display = 'block';
-      playVideoBtn.style.display = 'block'; // Показуємо кнопку
+      
+      // Показуємо кнопку ТІЛЬКИ якщо відео не грає
+      if (!isPlaying && canPlay) {
+        playVideoBtn.style.display = 'block';
+      }
     });
 
     // --- Подія: маркер втрачено ---
@@ -209,20 +209,27 @@
       scanText.style.display = 'block';
       centerYellowDot.style.display = 'none';
       playVideoBtn.style.display = 'none';
-      arVideo.pause();
+      if (!arVideo.ended) {
+        arVideo.pause();
+        isPlaying = false;
+      }
     });
 
     // --- Відео закінчилося ---
     arVideo.addEventListener('ended', () => {
-      playVideoBtn.style.display = 'block'; // Знову показуємо кнопку
+      isPlaying = false;
+      playVideoBtn.style.display = 'block'; // Показуємо кнопку "знову"
     });
 
     // --- Функція запуску відео ---
     function playVideo() {
-      arVideo.currentTime = 0; // Почати з початку
+      if (isPlaying) return; // Якщо вже грає — нічого не робимо
+
+      arVideo.currentTime = 0;
       arVideo.play()
         .then(() => {
-          playVideoBtn.style.display = 'none'; // Приховуємо кнопку під час відтворення
+          isPlaying = true;
+          playVideoBtn.style.display = 'none';
           successSound.currentTime = 0;
           successSound.play().catch(() => {});
         })
@@ -248,3 +255,4 @@
   </script>
 </body>
 </html>
+
