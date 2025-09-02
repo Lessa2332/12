@@ -47,7 +47,7 @@
       animation: bounce 1s infinite;
     }
 
-    /* Інструкція AR */
+    /* Інструкція */
     #scanText {
       position: fixed;
       top: 50%;
@@ -115,16 +115,6 @@
       left: 50%;
       transform: translateX(-50%);
       background: #2196F3;
-      color: white;
-      display: none;
-    }
-
-    #restartBtn {
-      position: fixed;
-      bottom: 100px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #FF9800;
       color: white;
       display: none;
     }
@@ -203,18 +193,19 @@
   <!-- Кнопки -->
   <button id="playVideoBtn" class="btn" onclick="playVideo()">▶️ Запустити відео</button>
   <button id="startQuizBtn" class="btn" onclick="showQuiz()">🎮 Грати у вікторину</button>
-  <button id="restartBtn" class="btn" onclick="restartAR()">🔄 Розпочати знову</button>
 
   <!-- AR Сцена -->
   <a-scene embedded arjs="sourceType: webcam; detectionMode: mono; trackingMethod: best;">
     <a-marker id="marker" type="pattern" url="marker.patt">
+      <!-- 🔹 Важливо: loop="false" у HTML, а не в JS -->
       <a-video 
         id="arVideo" 
         src="ar-video.mp4" 
         position="0 0 0" 
         rotation="-90 0 0" 
         preload="none"
-        muted="true">
+        muted="true"
+        loop="false">
       </a-video>
     </a-marker>
     <a-entity camera></a-entity>
@@ -234,18 +225,20 @@
   </div>
 
   <script>
+    // --- Основні елементи ---
     const marker = document.getElementById('marker');
     const scanText = document.getElementById('scanText');
     const centerYellowDot = document.getElementById('centerYellowDot');
     const playVideoBtn = document.getElementById('playVideoBtn');
+    const startQuizBtn = document.getElementById('startQuizBtn');
     const arVideo = document.getElementById('arVideo');
     const clickToStart = document.getElementById('clickToStart');
     const quizContainer = document.getElementById('quizContainer');
 
-    let canPlay = false;
-    let isPlaying = false;
+    let canPlay = false;  // Чи розблоковано взаємодію
+    let isPlaying = false; // Чи відео зараз грає
 
-    // --- Вікторина (оновлено: Говерла замість пісні) ---
+    // --- Вікторина ---
     const quiz = [
       { q: "Яка столиця України?", o: ["Київ", "Львів", "Одеса"], c: 0 },
       { q: "Який колір прапора України?", o: ["Червоно-чорний", "Синьо-жовтий", "Зелено-білий"], c: 1 },
@@ -296,16 +289,18 @@
 
     // --- Події ---
 
+    // Розблокування взаємодії
     clickToStart.addEventListener('click', () => {
       clickToStart.style.display = 'none';
       canPlay = true;
     });
 
-    // Гарантоване ініціалізаційне стан відео
-    arVideo.pause();
-    arVideo.loop = false;
-
+    // Гарантована ініціалізація відео
     arVideo.addEventListener('loadedmetadata', () => {
+      // 🔹 Пауза після завантаження
+      arVideo.pause();
+
+      // 🔹 Розміри відео (9:16)
       const videoWidth = arVideo.videoWidth;
       const videoHeight = arVideo.videoHeight;
       const scaleFactor = 2;
@@ -315,38 +310,50 @@
       arVideo.setAttribute('height', height);
     });
 
+    // Маркер знайдено
     marker.addEventListener('markerFound', () => {
       scanText.style.display = 'none';
       centerYellowDot.style.display = 'block';
+
+      // Показуємо кнопку, якщо відео не грає і немає вікторини
       if (!isPlaying && canPlay && quizContainer.style.display !== 'flex') {
         playVideoBtn.style.display = 'block';
       }
     });
 
+    // Маркер втрачено
     marker.addEventListener('markerLost', () => {
       scanText.style.display = 'block';
       centerYellowDot.style.display = 'none';
       playVideoBtn.style.display = 'none';
       startQuizBtn.style.display = 'none';
-      arVideo.pause(); // Гарантована пауза
+      if (!arVideo.ended) {
+        arVideo.pause();
+        isPlaying = false;
+      }
     });
 
+    // Відео закінчилося
     arVideo.addEventListener('ended', () => {
       isPlaying = false;
       playVideoBtn.style.display = 'none';
       startQuizBtn.style.display = 'block';
     });
 
+    // Запуск відео
     function playVideo() {
       if (isPlaying) return;
+
       arVideo.currentTime = 0;
-      arVideo.play().catch(err => {
-        console.warn("Не вдалося відтворити відео", err);
-        alert("Натисни ще раз!");
+      arVideo.play().then(() => {
+        isPlaying = true;
+      }).catch(err => {
+        console.warn("Не вдалося відтворити відео — чекаємо на клік", err);
+        alert("Натисни ще раз, щоб запустити відео!");
       });
-      isPlaying = true;
     }
 
+    // Повернення до сканування
     function restartAR() {
       quizContainer.style.display = 'none';
       document.getElementById('opt1').style.display = 'block';
@@ -356,12 +363,14 @@
       scanText.style.display = 'block';
     }
 
+    // Фікс висоти
     function fixHeight() {
       document.body.style.height = window.innerHeight + 'px';
     }
     window.addEventListener('resize', fixHeight);
     fixHeight();
 
+    // Задня камера
     AFRAME.utils.device.getCameraPermission = () => {
       return navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment' }
