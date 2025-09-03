@@ -222,12 +222,13 @@
     });
 
     // Після завантаження метаданих — встановлюємо пропорції
-    arVideo.addEventListener('loadedmetadata', () => {
-  const aspect = arVideo.videoWidth / arVideo.videoHeight;
-  arVideoEntity.setAttribute('geometry', 'width', 4 * aspect);
-  arVideoEntity.setAttribute('geometry', 'height', 4);
+arVideo.addEventListener('loadedmetadata', () => {
+  const aspect = arVideo.videoWidth / arVideo.videoHeight; // Наприклад, 9/16
+  const targetHeight = 2;
+  const targetWidth = targetHeight * aspect;
+  arVideoEntity.setAttribute('geometry', 'width', targetWidth);
+  arVideoEntity.setAttribute('geometry', 'height', targetHeight);
 });
-
     // Маркер знайдено
     marker.addEventListener('markerFound', () => {
       scanText.style.display = 'none';
@@ -279,4 +280,5 @@
   </script>
 </body>
 </html>
+
 
