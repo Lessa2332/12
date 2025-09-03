@@ -223,10 +223,10 @@
 
     // Після завантаження метаданих — встановлюємо пропорції
     arVideo.addEventListener('loadedmetadata', () => {
-      const aspect = arVideo.videoWidth / arVideo.videoHeight;
-      arVideoEntity.setAttribute('geometry', 'height', 2); // фіксуємо висоту
-      arVideoEntity.setAttribute('geometry', 'width', 2 * aspect);
-    });
+  const aspect = arVideo.videoWidth / arVideo.videoHeight;
+  arVideoEntity.setAttribute('geometry', 'width', 4 * aspect);
+  arVideoEntity.setAttribute('geometry', 'height', 4);
+});
 
     // Маркер знайдено
     marker.addEventListener('markerFound', () => {
@@ -279,3 +279,4 @@
   </script>
 </body>
 </html>
+
