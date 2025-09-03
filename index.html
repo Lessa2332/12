@@ -171,18 +171,20 @@
   <!-- AR Сцена -->
   <a-scene embedded arjs="sourceType: webcam; detectionMode: mono; trackingMethod: best;">
     <a-marker id="marker" type="pattern" url="marker.patt">
-      <a-video 
-        id="arVideo" 
-        src="ar-video.mp4" 
-        position="0 0 0" 
-        rotation="-90 0 0" 
-        preload="none"
-        autoplay="false"
-        muted="true">
-      </a-video>
+      <!-- Використовуємо a-entity для масштабування відео -->
+      <a-entity
+        id="arVideoEntity"
+        geometry="primitive: plane; width: 2; height: auto"
+        material="shader: flat; src: #arVideoSrc; transparent: true"
+        rotation="-90 0 0"
+        scale="2 2 2"> <!-- Збільшено в 2 рази -->
+      </a-entity>
     </a-marker>
     <a-entity camera></a-entity>
   </a-scene>
+
+  <!-- Приховане відео для текстури -->
+  <video id="arVideoSrc" src="ar-video.mp4" preload="auto" loop crossorigin="anonymous" style="display:none"></video>
 
   <!-- Кнопка YouTube -->
   <a href="https://youtube.com/playlist?list=PL6UDFwT9TzFxsVdFiEBsQ9yFpcYRPOpfO&si=IyXv1SkdPyvhcW7Z" 
@@ -195,15 +197,12 @@
     <button id="stopBtn" class="video-btn">⏹</button>
   </div>
 
-  <!-- Звук -->
-  <audio id="successSound" src="https://cdn.pixabay.com/audio/2021/09/21/audio_2811f3692c.mp3" preload="auto"></audio>
-
   <script>
     const marker = document.getElementById('marker');
     const scanText = document.getElementById('scanText');
     const centerYellowDot = document.getElementById('centerYellowDot');
-    const arVideo = document.getElementById('arVideo');
-    const successSound = document.getElementById('successSound');
+    const arVideo = document.getElementById('arVideoSrc'); // Відео як текстура
+    const arVideoEntity = document.getElementById('arVideoEntity');
     const clickToStart = document.getElementById('clickToStart');
     const videoControls = document.getElementById('videoControls');
 
@@ -222,26 +221,21 @@
       canPlay = true;
     });
 
-    // Пропорції відео
+    // Після завантаження метаданих — встановлюємо пропорції
     arVideo.addEventListener('loadedmetadata', () => {
-      const videoWidth = arVideo.videoWidth;
-      const videoHeight = arVideo.videoHeight;
-      const scaleFactor = 2;
-      const height = (videoHeight / 100) * scaleFactor;
-      const width = (videoWidth / videoHeight) * height;
-      arVideo.setAttribute('width', width);
-      arVideo.setAttribute('height', height);
+      const aspect = arVideo.videoWidth / arVideo.videoHeight;
+      arVideoEntity.setAttribute('geometry', 'height', 2); // фіксуємо висоту
+      arVideoEntity.setAttribute('geometry', 'width', 2 * aspect);
     });
 
     // Маркер знайдено
     marker.addEventListener('markerFound', () => {
       scanText.style.display = 'none';
       centerYellowDot.style.display = 'block';
-      videoControls.style.display = 'flex'; // Показуємо кнопки
+      videoControls.style.display = 'flex';
 
       if (canPlay) {
         arVideo.play().catch(() => {});
-        successSound.play().catch(() => {});
       }
     });
 
@@ -249,23 +243,21 @@
     marker.addEventListener('markerLost', () => {
       scanText.style.display = 'block';
       centerYellowDot.style.display = 'none';
-      videoControls.style.display = 'none'; // Приховуємо кнопки
+      videoControls.style.display = 'none';
       arVideo.pause();
     });
 
-    // Кнопка Play
+    // Кнопки керування
     playBtn.addEventListener('click', () => {
       if (canPlay) {
         arVideo.play().catch(err => console.warn("Play відео було заблоковано:", err));
       }
     });
 
-    // Кнопка Пауза
     pauseBtn.addEventListener('click', () => {
       arVideo.pause();
     });
 
-    // Кнопка Зупинити (пауза + початок)
     stopBtn.addEventListener('click', () => {
       arVideo.pause();
       arVideo.currentTime = 0;
@@ -287,4 +279,3 @@
   </script>
 </body>
 </html>
-
