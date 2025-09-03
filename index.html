@@ -1,17 +1,12 @@
-
 <!DOCTYPE html>
 <html lang="uk">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>AR Камера — Чарівне Пригодництво!</title>
-
-  <!-- A-Frame та AR.js -->
   <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-
   <style>
-    /* Стилі з першого проєкту + додані від другого */
     html, body {
       margin: 0;
       padding: 0;
@@ -22,7 +17,6 @@
       font-family: 'Comic Sans MS', cursive, sans-serif;
       background: transparent;
     }
-
     a-scene {
       width: 100% !important;
       height: 100% !important;
@@ -32,32 +26,6 @@
       background: transparent;
     }
 
-    /* Екран активації */
-    #clickToStart {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      color: white;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 100;
-      text-align: center;
-      font-size: 1.8em;
-      padding: 20px;
-    }
-    #clickToStart span {
-      display: inline-block;
-      animation: bounce 1s infinite;
-    }
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-
-    /* Інструкція сканування */
     #scanText {
       position: fixed;
       top: 50%;
@@ -70,13 +38,45 @@
       z-index: 10;
       text-align: center;
       width: 90%;
+      animation: pulse 1.5s infinite;
       background: rgba(255, 255, 0, 0.9);
       padding: 15px;
       border-radius: 20px;
       box-shadow: 0 0 20px rgba(255, 105, 180, 0.8);
     }
+    @keyframes pulse {
+      0% { transform: translate(-50%, -50%) scale(1); }
+      50% { transform: translate(-50%, -50%) scale(1.1); }
+      100% { transform: translate(-50%, -50%) scale(1); }
+    }
 
-    /* Жовта крапка */
+    #clickToStart {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      font-size: 1.8em;
+      text-align: center;
+      padding: 20px;
+    }
+    #clickToStart span {
+      display: inline-block;
+      animation: bounce 1s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
     #centerYellowDot {
       position: fixed;
       top: 50%;
@@ -92,308 +92,119 @@
       opacity: 0.9;
     }
 
-    /* Кнопки */
-    .btn {
-      padding: 16px 32px;
-      border: none;
-      border-radius: 30px;
-      font-size: 1.3em;
-      background: #FF69B4;
-      color: white;
-      cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-      transition: all 0.3s;
-    }
-    .btn:hover {
-      background: #FF1493;
-      transform: scale(1.05);
-    }
-
-    /* Відео-контролі */
-    #video-controls {
-      position: absolute;
+    #smartLessaBtn {
+      position: fixed;
       bottom: 20px;
-      width: 100%;
-      text-align: center;
-      z-index: 20;
-      display: none;
-    }
-
-    /* Вікторина */
-    #quiz-container {
-      position: absolute;
-      top: 50%;
       left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(0, 0, 0, 0.9);
+      transform: translateX(-50%);
+      background: linear-gradient(45deg, #ff0044, #ff6600);
       color: white;
-      padding: 25px;
-      border-radius: 12px;
-      max-width: 90%;
-      width: 400px;
-      text-align: center;
-      z-index: 30;
-      display: none;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    }
-    #quiz-container h2 {
-      margin: 0 0 16px;
-      font-size: 22px;
-    }
-    #question {
-      font-size: 18px;
-      margin-bottom: 16px;
-    }
-    #options {
-      margin-bottom: 20px;
-    }
-    .option {
-      padding: 12px;
-      margin: 8px 0;
-      background: #333;
-      cursor: pointer;
-      border-radius: 8px;
-      transition: transform 0.1s;
-      border: 1px solid #555;
-    }
-    .option:hover {
-      background: #444;
-    }
-    .option.correct {
-      background: #28a745;
-      color: white;
-      animation: correct 0.5s;
+      padding: 14px 24px;
+      border-radius: 30px;
+      font-size: 1.1em;
       font-weight: bold;
-    }
-    .option.incorrect {
-      background: #dc3545;
-      color: white;
-      animation: incorrect 0.5s;
-    }
-    @keyframes correct {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.1); }
-      100% { transform: scale(1); }
-    }
-    @keyframes incorrect {
-      0% { transform: translateX(0); }
-      25% { transform: translateX(-10px); }
-      50% { transform: translateX(10px); }
-      75% { transform: translateX(-10px); }
-      100% { transform: translateX(0); }
-    }
-    #next-question, #return-to-ar {
-      display: none;
+      text-decoration: none;
+      z-index: 10;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.4);
     }
   </style>
 </head>
 <body>
 
-  <!-- Екран активації -->
+  <!-- Підказка: клікни, щоб увімкнути -->
   <div id="clickToStart">
-    Торкнись екрана, щоб почати<br>
+    Клацни, щоб<br>увімкнути чари! ✨<br>
     <span>👇</span>
   </div>
 
-  <!-- Інструкція -->
-  <div id="scanText">
-    🔍 Наведи камеру на маркер
-  </div>
+  <!-- Інструкція AR -->
+  <div id="scanText">🔍 Наведи на зображення!</div>
 
   <!-- Жовта крапка -->
   <div id="centerYellowDot"></div>
 
-  <!-- Відео-контролі -->
-  <div id="video-controls">
-    <button class="btn" onclick="playVideo()">▶️ Запустити</button>
-    <button class="btn" onclick="pauseVideo()">⏸ Пауза</button>
-    <button class="btn" onclick="stopVideo()">⏹ Зупинити</button>
-    <button class="btn" onclick="showQuiz()">❓ Вікторина</button>
-  </div>
-
-  <!-- Вікторина -->
-  <div id="quiz-container">
-    <h2>Вікторина про Україну</h2>
-    <div id="question"></div>
-    <div id="options"></div>
-    <button id="next-question" class="btn">Наступне питання</button>
-    <button id="return-to-ar" class="btn">🔄 Повернутися</button>
-  </div>
-
-  <!-- AR-сцена -->
-  <a-scene
-    embedded
-    arjs="sourceType: webcam; debugUIEnabled: false;"
-    vr-mode-ui="enabled: false"
-  >
-    <a-marker type="pattern" url="./markers/marker.patt">
-      <a-video
-        id="ar-video"
-        src="./video/ar-video.mp4"
-        width="2"
-        height="1.125"
-        position="0 0 0"
-        rotation="-90 0 0"
+  <!-- AR Сцена -->
+  <a-scene embedded arjs="sourceType: webcam; detectionMode: mono; trackingMethod: best;">
+    <a-marker id="marker" type="pattern" url="marker.patt">
+      <a-video 
+        id="arVideo" 
+        src="ar-video.mp4" 
+        position="0 0 0" 
+        rotation="-90 0 0" 
+        preload="none"
         autoplay="false"
-        muted
-        playsinline
-      ></a-video>
+        muted="true">
+      </a-video>
     </a-marker>
     <a-entity camera></a-entity>
   </a-scene>
 
-  <!-- Скрипти -->
-  <script>
-    // Елементи
-    const clickToStart = document.getElementById('clickToStart');
-    const scanText = document.getElementById('scanText');
-    const videoControls = document.getElementById('video-controls');
-    const videoEl = document.getElementById('ar-video');
-    const quizContainer = document.getElementById('quiz-container');
-    const questionEl = document.getElementById('question');
-    const optionsEl = document.getElementById('options');
-    const nextButton = document.getElementById('next-question');
-    const returnButton = document.getElementById('return-to-ar');
+  <!-- Кнопка YouTube -->
+  <a href="https://youtube.com/playlist?list=PL6UDFwT9TzFxsVdFiEBsQ9yFpcYRPOpfO&si=IyXv1SkdPyvhcW7Z" 
+     id="smartLessaBtn" target="_blank">👉 Дивись більше на @SmartLessa</a>
 
-    // Активуємо AR при кліку
-    clickToStart.addEventListener('click', () => {
-      clickToStart.style.display = 'none';
-      scanText.style.display = 'block';
-      document.getElementById('centerYellowDot').style.display = 'block';
+  <!-- Звук -->
+  <audio id="successSound" src="https://cdn.pixabay.com/audio/2021/09/21/audio_2811f3692c.mp3" preload="auto"></audio>
+
+  <script>
+    const marker = document.getElementById('marker');
+    const scanText = document.getElementById('scanText');
+    const centerYellowDot = document.getElementById('centerYellowDot');
+    const arVideo = document.getElementById('arVideo');
+    const successSound = document.getElementById('successSound');
+    const clickToStart = document.getElementById('clickToStart');
+
+    let canPlay = false; // Чи дозволив користувач грати
+
+    // Перший клік — розблокує можливість грати
+    clickToStart.addEventListener('click', function() {
+      clickToStart.style.display = 'none'; // Приховуємо екран
+      canPlay = true;
     });
 
-    // Звуки
-    let soundUnlocked = false;
-    document.body.addEventListener('click', unlockAudio, { once: true });
+    // Пропорції відео
+    arVideo.addEventListener('loadedmetadata', () => {
+      const videoWidth = arVideo.videoWidth;
+      const videoHeight = arVideo.videoHeight;
+      const scaleFactor = 2;
+      const height = (videoHeight / 100) * scaleFactor;
+      const width = (videoWidth / videoHeight) * height;
+      arVideo.setAttribute('width', width);
+      arVideo.setAttribute('height', height);
+    });
 
-    function unlockAudio() {
-      soundUnlocked = true;
-      const correctSound = new Audio('https://www.soundjay.com/buttons/sounds/beep-01a.mp3');
-      const incorrectSound = new Audio('https://www.soundjay.com/buttons/sounds/beep-02.mp3');
-      correctSound.volume = 0;
-      incorrectSound.volume = 0;
-      correctSound.play().then(() => {
-        window.correctSound = correctSound;
-        window.incorrectSound = incorrectSound;
-        correctSound.volume = 1;
-        incorrectSound.volume = 1;
-      }).catch(() => {
-        console.warn("Автовідтворення заблоковано.");
-      });
-    }
-
-    // Питання
-    const questions = [
-      { question: "Столиця України?", options: ["Київ", "Львів", "Одеса", "Харків"], correct: 0 },
-      { question: "Державна мова України?", options: ["Російська", "Українська", "Польська"], correct: 1 },
-      { question: "Який символ на гербі України?", options: ["Зірка", "Тризуб", "Сонце"], correct: 1 },
-      { question: "Рік проголошення Незалежності України?", options: ["1990", "1991", "1992"], correct: 1 },
-      { question: "Найбільша річка України?", options: ["Дніпро", "Дунай", "Дністер"], correct: 0 }
-    ];
-
-    let currentQuestion = 0;
-
-    // Події маркера
-    const marker = document.querySelector('a-marker');
+    // Маркер знайдено
     marker.addEventListener('markerFound', () => {
       scanText.style.display = 'none';
-      videoControls.style.display = 'block';
+      centerYellowDot.style.display = 'block';
+
+      if (canPlay) {
+        arVideo.play().catch(() => {});
+        successSound.play().catch(() => {});
+      }
     });
 
+    // Маркер втрачено
     marker.addEventListener('markerLost', () => {
       scanText.style.display = 'block';
-      videoControls.style.display = 'none';
-      if (quizContainer.style.display === 'block') {
-        if (confirm("Маркер втрачено. Повернутися до сканування?")) {
-          quizContainer.style.display = 'none';
-          stopVideo();
-        }
-      } else {
-        stopVideo();
-      }
+      centerYellowDot.style.display = 'none';
+      arVideo.pause();
     });
 
-    // Відео
-    function getVideo() {
-      return videoEl.components.material.material.map.image;
+    // Фікс висоти
+    function fixHeight() {
+      document.body.style.height = window.innerHeight + 'px';
     }
+    window.addEventListener('resize', fixHeight);
+    fixHeight();
 
-    function playVideo() {
-      const video = getVideo();
-      if (video) video.play().catch(e => console.error("Помилка відтворення:", e));
-    }
-
-    function pauseVideo() {
-      const video = getVideo();
-      if (video) video.pause();
-    }
-
-    function stopVideo() {
-      const video = getVideo();
-      if (video) {
-        video.pause();
-        video.currentTime = 0;
-      }
-    }
-
-    // Вікторина
-    function showQuiz() {
-      videoControls.style.display = 'none';
-      quizContainer.style.display = 'block';
-      currentQuestion = 0;
-      displayQuestion();
-    }
-
-    function displayQuestion() {
-      const q = questions[currentQuestion];
-      questionEl.textContent = q.question;
-      optionsEl.innerHTML = '';
-
-      q.options.forEach((option, index) => {
-        const btn = document.createElement('button');
-        btn.className = 'option';
-        btn.textContent = option;
-        btn.onclick = () => checkAnswer(index);
-        optionsEl.appendChild(btn);
+    // Задня камера
+    AFRAME.utils.device.getCameraPermission = function () {
+      return navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }
       });
-
-      nextButton.style.display = 'none';
-    }
-
-    function checkAnswer(index) {
-      const q = questions[currentQuestion];
-      const options = optionsEl.children;
-
-      if (index === q.correct) {
-        options[index].classList.add('correct');
-        if (window.correctSound) window.correctSound.play();
-      } else {
-        options[index].classList.add('incorrect');
-        options[q.correct].classList.add('correct');
-        if (window.incorrectSound) window.incorrectSound.play();
-      }
-
-      Array.from(options).forEach(btn => { btn.onclick = null; });
-
-      nextButton.style.display = 'block';
-      if (currentQuestion === questions.length - 1) {
-        nextButton.style.display = 'none';
-        returnButton.style.display = 'block';
-      }
-    }
-
-    nextButton.onclick = () => {
-      currentQuestion++;
-      if (currentQuestion < questions.length) {
-        displayQuestion();
-      }
-    };
-
-    returnButton.onclick = () => {
-      quizContainer.style.display = 'none';
-      videoControls.style.display = 'block';
-      stopVideo();
     };
   </script>
 </body>
 </html>
+
