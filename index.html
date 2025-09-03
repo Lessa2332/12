@@ -107,6 +107,51 @@
       z-index: 10;
       box-shadow: 0 6px 12px rgba(0,0,0,0.4);
     }
+
+    /* Кнопки керування відео */
+    #videoControls {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 15px;
+      z-index: 10;
+    }
+
+    .video-btn {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255, 255, 255, 0.9);
+      color: #d1006c;
+      font-size: 1.5em;
+      font-weight: bold;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .video-btn:active {
+      transform: scale(0.95);
+    }
+    .video-btn:hover {
+      background: white;
+    }
+    #stopBtn {
+      background: #ff3333 !important;
+      color: white !important;
+    }
+    #pauseBtn {
+      background: #ffcc00 !important;
+    }
+    #playBtn {
+      background: #00cc66 !important;
+      color: white !important;
+    }
   </style>
 </head>
 <body>
@@ -143,6 +188,13 @@
   <a href="https://youtube.com/playlist?list=PL6UDFwT9TzFxsVdFiEBsQ9yFpcYRPOpfO&si=IyXv1SkdPyvhcW7Z" 
      id="smartLessaBtn" target="_blank">👉 Дивись більше на @SmartLessa</a>
 
+  <!-- Кнопки керування відео -->
+  <div id="videoControls">
+    <button id="playBtn" class="video-btn">▶</button>
+    <button id="pauseBtn" class="video-btn">⏸</button>
+    <button id="stopBtn" class="video-btn">⏹</button>
+  </div>
+
   <!-- Звук -->
   <audio id="successSound" src="https://cdn.pixabay.com/audio/2021/09/21/audio_2811f3692c.mp3" preload="auto"></audio>
 
@@ -153,12 +205,20 @@
     const arVideo = document.getElementById('arVideo');
     const successSound = document.getElementById('successSound');
     const clickToStart = document.getElementById('clickToStart');
+    const videoControls = document.getElementById('videoControls');
 
-    let canPlay = false; // Чи дозволив користувач грати
+    const playBtn = document.getElementById('playBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const stopBtn = document.getElementById('stopBtn');
+
+    let canPlay = false;
+
+    // Приховуємо кнопки керування спочатку
+    videoControls.style.display = 'none';
 
     // Перший клік — розблокує можливість грати
     clickToStart.addEventListener('click', function() {
-      clickToStart.style.display = 'none'; // Приховуємо екран
+      clickToStart.style.display = 'none';
       canPlay = true;
     });
 
@@ -177,6 +237,7 @@
     marker.addEventListener('markerFound', () => {
       scanText.style.display = 'none';
       centerYellowDot.style.display = 'block';
+      videoControls.style.display = 'flex'; // Показуємо кнопки
 
       if (canPlay) {
         arVideo.play().catch(() => {});
@@ -188,7 +249,26 @@
     marker.addEventListener('markerLost', () => {
       scanText.style.display = 'block';
       centerYellowDot.style.display = 'none';
+      videoControls.style.display = 'none'; // Приховуємо кнопки
       arVideo.pause();
+    });
+
+    // Кнопка Play
+    playBtn.addEventListener('click', () => {
+      if (canPlay) {
+        arVideo.play().catch(err => console.warn("Play відео було заблоковано:", err));
+      }
+    });
+
+    // Кнопка Пауза
+    pauseBtn.addEventListener('click', () => {
+      arVideo.pause();
+    });
+
+    // Кнопка Зупинити (пауза + початок)
+    stopBtn.addEventListener('click', () => {
+      arVideo.pause();
+      arVideo.currentTime = 0;
     });
 
     // Фікс висоти
@@ -198,7 +278,7 @@
     window.addEventListener('resize', fixHeight);
     fixHeight();
 
-    // Задня камера
+    // Використовуємо задню камеру
     AFRAME.utils.device.getCameraPermission = function () {
       return navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment' }
@@ -207,4 +287,3 @@
   </script>
 </body>
 </html>
-
