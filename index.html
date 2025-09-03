@@ -225,7 +225,7 @@
 arVideo.addEventListener('loadedmetadata', () => {
   const aspect = arVideo.videoWidth / arVideo.videoHeight;
   const targetHeight = 2;
-  const widenedWidth = targetHeight * aspect * 1.3;
+  const widenedWidth = targetHeight * aspect * 1.8;
 
   arVideoEntity.setAttribute('geometry', 'width', widenedWidth);
   arVideoEntity.setAttribute('geometry', 'height', targetHeight);
@@ -281,6 +281,7 @@ arVideo.addEventListener('loadedmetadata', () => {
   </script>
 </body>
 </html>
+
 
 
 
